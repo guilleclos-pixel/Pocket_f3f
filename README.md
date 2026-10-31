@@ -26,6 +26,10 @@ Pocket_f3f is a lightweight 3D slope-soaring simulator that runs **on the transm
 ## Credits
 Concept, pilot testing and tuning: an F3F pilot. Lua development: created with assistance from ChatGPT (OpenAI), iterated with pilot feedback.
 
+## Licensing
+- Lua source code and documentation: MIT License (`LICENSE`).
+- Flyby sound: limited project-specific permission (`AUDIO_LICENSE.md`); attribution required for modified versions of Pocket_f3f.
+
 ## Release notes / outstanding checks
 - Code taken **unchanged** from the user-approved Pocket_f3f Lua 3.10 ZIP.
 - The beta release candidate was tested on a RadioMaster TX16S MKIII; the on-screen label reads `POCKET F3F BETA`.

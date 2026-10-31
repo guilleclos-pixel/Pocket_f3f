@@ -6,7 +6,8 @@
 - [ ] Confirm A-start, 30 s entry timing, ten legs, base and penalty sounds, impact, SH reset.
 - [ ] Make sure the current source and flyby audio can be redistributed as open source.
 - [x] Select MIT license for code and documentation.
-- [ ] Review flyby WAV provenance and explicitly decide distribution license for audio.
+- [x] Document the owner's permission to distribute and modify the WAV within Pocket_f3f (`AUDIO_LICENSE.md`).
+- [ ] Final audio provenance check before public release.
 - [ ] Confirm repository visibility, README and issue reporting.
 - [ ] Add release ZIP and video link; publish only after approval.
 - [ ] Ask early testers for radio model, EdgeTX version, FPS, issues and a short video.
