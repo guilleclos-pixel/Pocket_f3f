@@ -1,6 +1,6 @@
 # Pocket_f3f — EdgeTX F3F slope soaring simulator
 
-**Preview / beta release candidate (not published yet)**
+**Beta release candidate — repository remains private pending public release.**
 
 Pocket_f3f is a lightweight 3D slope-soaring simulator that runs **on the transmitter itself**, using its sticks and screen. Developed through iterative flight testing by an F3F pilot with programming assistance from ChatGPT (OpenAI).
 
@@ -28,7 +28,7 @@ Concept, pilot testing and tuning: an F3F pilot. Lua development: created with a
 
 ## Release notes / outstanding checks
 - Code taken **unchanged** from the user-approved Pocket_f3f Lua 3.10 ZIP.
-- **Known cosmetic issue**: the on-screen version text still says `POCKET F3F 3.9`, despite the package being labelled 3.10. A future beta can update that text once approved.
+- The beta release candidate was tested on a RadioMaster TX16S MKIII; the on-screen label reads `POCKET F3F BETA`.
 - Install from a clean SD layout; verify WAV path, ten legs, penalties, reset, FPS, speaker volume.
-- Confirm project ownership and choose a software license before publishing. Confirm that the flyby sound is original and cleared for redistribution.
+- Code and documentation are licensed under the MIT License (see `LICENSE`). Confirm the flyby sound's original provenance and redistribution rights before public release.
 - Public beta distribution is pending review.
