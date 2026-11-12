@@ -1,4 +1,4 @@
--- Pocket_f3f 3.10 - single smooth flyby sound; physics and F3F race unchanged
+-- Pocket_f3f 1.2 Voice TEST - countdown and race-end voices; stable flight unchanged
 -- No RF functions, no model configuration changes.
 local sin,cos,sqrt,abs,pi=math.sin,math.cos,math.sqrt,math.abs,math.pi
 local function C(r,g,b) return lcd.RGB(r,g,b) end
@@ -15,7 +15,7 @@ end
 local function create(zone,options)
  return {zone=zone,last=getTime(),timer=getTime(),frames=0,fps=0,
  x=0,y=-18,z=33,heading=pi/2,bank=0,pitch=0,velocity=34, lift=0,crashed=false,resetHeld=false,
- launch=0, prepStart=getTime(),runStart=nil,runEnd=nil,entered=false,legs=0,nextBase=nil,baseLast=0,finishTone=false,lastCount=31,penalties=0,penLast=0,rearActive=false,lastSignal=0,lastWhistle=-600,pendingBaseTone=0,pendingBaseAt=0}
+ launch=0, prepStart=getTime(),runStart=nil,runEnd=nil,entered=false,legs=0,nextBase=nil,baseLast=0,finishTone=false,lastCount=31,penalties=0,penLast=0,rearActive=false,lastSignal=0,lastWhistle=-600,pendingBaseTone=0,pendingBaseAt=0,voiceLaunch=false,voiceThirty=false,pendingRaceVoice=nil,pendingRaceVoiceAt=0}
 end
 local function triangle(a,b,c,col)
  lcd.drawFilledTriangle(math.floor(a[1]),math.floor(a[2]),math.floor(b[1]),math.floor(b[2]),math.floor(c[1]),math.floor(c[2]),col)
@@ -31,17 +31,34 @@ local function refresh(s,event,touch)
  if held and not s.resetHeld then
   s.x=0;s.y=-18;s.z=33;s.heading=pi/2;s.bank=0;s.pitch=0
   s.velocity=34;s.lift=0;s.crashed=false;s.last=t;dt=0
-  s.prepStart=t;s.runStart=nil;s.runEnd=nil;s.entered=false;s.legs=0;s.nextBase=nil;s.baseLast=t;s.lastCount=31;s.penalties=0;s.penLast=0;s.rearActive=false;s.lastSignal=t;s.lastWhistle=t-600;s.pendingBaseTone=0;s.pendingBaseAt=0
+  s.prepStart=t;s.runStart=nil;s.runEnd=nil;s.entered=false;s.legs=0;s.nextBase=nil;s.baseLast=t;s.lastCount=31;s.penalties=0;s.penLast=0;s.rearActive=false;s.lastSignal=t;s.lastWhistle=t-600;s.pendingBaseTone=0;s.pendingBaseAt=0;s.voiceLaunch=false;s.voiceThirty=false;s.pendingRaceVoice=nil;s.pendingRaceVoiceAt=0
  end
  s.resetHeld=held
+ -- Experimental voice announcements: separate WAVs in the existing Spanish sound directory.
+ -- 30-second prompt is delayed so it does not overlap the launch announcement.
+ -- Once the run has started, pending preparation announcements are suppressed.
+ if not s.voiceLaunch and not s.crashed and type(playFile)=='function' then
+  playFile('/SOUNDS/es/POCKETF3F/launch1.wav')
+  s.voiceLaunch=true
+ end
+ if not s.voiceThirty and not s.entered and not s.runEnd and not s.crashed
+     and t-s.prepStart>=145 and t-s.prepStart<900 and type(playFile)=='function' then
+  playFile('/SOUNDS/es/POCKETF3F/thirty.wav')
+  s.voiceThirty=true
+ end
  -- Acoustic preparation: one event per countdown second transition.
  -- Low sound at 10/5, short high ticks at 4,3,2,1; distinct READY at zero.
  if not s.entered and not s.runEnd and not s.crashed then
   local remaining=math.max(0,30-math.floor((t-s.prepStart)/100))
   if remaining<s.lastCount then
    if type(playTone)=='function' then
-    if remaining==10 or remaining==5 then playTone(740,130,0,0)
-    elseif remaining>=1 and remaining<=4 then playTone(1000,90,0,0)
+    if remaining==10 then
+      if type(playFile)=='function' then playFile('/SOUNDS/es/POCKETF3F/ten.wav')
+      else playTone(740,130,0,0) end
+    elseif remaining>=1 and remaining<=5 then
+      local word=({[5]='five',[4]='four',[3]='three',[2]='two',[1]='one'})[remaining]
+      if type(playFile)=='function' then playFile('/SOUNDS/es/POCKETF3F/'..word..'.wav')
+      else playTone(1000,90,0,0) end
     elseif remaining==0 then playTone(1400,250,0,0) end
    end
    s.lastCount=remaining
@@ -160,7 +177,16 @@ local function refresh(s,event,touch)
       if t-s.penLast<85 and s.penLast>0 then s.pendingBaseTone=freq;s.pendingBaseAt=t+85
       else playTone(freq,(s.legs>=10) and 350 or 85,0,PLAY_NOW or 0) end
      end
-     if s.legs>=10 then s.runEnd=t end
+     if s.legs==9 and type(playFile)=='function' then
+      -- A base signal is vital; queue speech until it has sounded.
+      s.pendingRaceVoice='lastleg';s.pendingRaceVoiceAt=t+55
+     end
+     if s.legs>=10 then
+      s.runEnd=t
+      if type(playFile)=='function' then
+       s.pendingRaceVoice='finish';s.pendingRaceVoiceAt=t+55
+      end
+     end
     end
    end
    -- Original single flyby sample: only when crossing directly in front of the pilot.
@@ -183,6 +209,15 @@ local function refresh(s,event,touch)
  if s.pendingBaseTone>0 and t>=s.pendingBaseAt and type(playTone)=='function' then
   playTone(s.pendingBaseTone,(s.pendingBaseTone==1350) and 350 or 110,0,PLAY_NOW or 0)
   s.pendingBaseTone=0;s.lastSignal=t
+ end
+ -- Delayed end-of-race announcements: keep the base beep first.
+ -- Do not displace a base tone waiting for a penalty sound to finish.
+ if s.pendingRaceVoice and t>=s.pendingRaceVoiceAt
+     and s.pendingBaseTone==0 and t-s.lastSignal>=45 then
+  if type(playFile)=='function' then
+   playFile('/SOUNDS/es/POCKETF3F/'..s.pendingRaceVoice..'.wav')
+  end
+  s.pendingRaceVoice=nil
  end
  local r=s.zone or {};local x=r.x or 0;local y=r.y or 0
  local w=r.w or LCD_W;local h=r.h or LCD_H
