@@ -59,12 +59,12 @@ local function refresh(s,event,touch)
  -- 30-second prompt is delayed so it does not overlap the launch announcement.
  -- Once the run has started, pending preparation announcements are suppressed.
  if not s.voiceLaunch and not s.crashed and type(playFile)=='function' then
-  playFile('/SOUNDS/es/POCKETF3F/launch1.wav')
+  playFile('/SOUNDS/es/launch1.wav')
   s.voiceLaunch=true
  end
  if not s.voiceThirty and not s.entered and not s.runEnd and not s.crashed
      and t-s.prepStart>=145 and t-s.prepStart<900 and type(playFile)=='function' then
-  playFile('/SOUNDS/es/POCKETF3F/thirty.wav')
+  playFile('/SOUNDS/es/thirty.wav')
   s.voiceThirty=true
  end
  -- Acoustic preparation: one event per countdown second transition.
@@ -74,11 +74,11 @@ local function refresh(s,event,touch)
   if remaining<s.lastCount then
    if type(playTone)=='function' then
     if remaining==10 then
-      if type(playFile)=='function' then playFile('/SOUNDS/es/POCKETF3F/ten.wav')
+      if type(playFile)=='function' then playFile('/SOUNDS/es/ten.wav')
       else playTone(740,130,0,0) end
     elseif remaining>=1 and remaining<=5 then
       local word=({[5]='five',[4]='four',[3]='three',[2]='two',[1]='one'})[remaining]
-      if type(playFile)=='function' then playFile('/SOUNDS/es/POCKETF3F/'..word..'.wav')
+      if type(playFile)=='function' then playFile('/SOUNDS/es/'..word..'.wav')
       else playTone(1000,90,0,0) end
     elseif remaining==0 then playTone(1400,250,0,0) end
    end
@@ -262,7 +262,7 @@ local function refresh(s,event,touch)
  if s.pendingRaceVoice and t>=s.pendingRaceVoiceAt
      and s.pendingBaseTone==0 and t-s.lastSignal>=45 then
   if type(playFile)=='function' then
-   playFile('/SOUNDS/es/POCKETF3F/'..s.pendingRaceVoice..'.wav')
+   playFile('/SOUNDS/es/'..s.pendingRaceVoice..'.wav')
   end
   s.pendingRaceVoice=nil
  end
