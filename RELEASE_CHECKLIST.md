@@ -18,7 +18,8 @@ The historical checklist above records earlier work; it does not certify the voi
 
 - [x] Reviewed upload commits `3bf6e12` (Lua) and `c2f9cd0` (ten new WAVs).
 - [x] Corrected voice paths to the existing `/SOUNDS/es/` layout; retained `pf3fpass.wav`.
-- [x] Reviewed controls: aileron/elevator/SH only. Do not advertise Rudder until implemented and tested.
+- [x] Reviewed replacement upload `3a03dbb`: TEST10 reads and applies rudder, alongside aileron/elevator/SH; widget name is F3FRUD10 in WIDGETS/F3FTEST/.
+- [ ] Validate rudder direction/centering, vertical-flight recovery and the experimental flight core on the transmitter. This is more than a voice-only update.
 - [ ] Document provenance and redistribution permission for all ten new voice files; existing AUDIO_LICENSE.md covers only pf3fpass.wav.
 - [ ] Test this exact candidate on a clean SD installation with RF disabled; record radio and EdgeTX version.
 - [ ] Hear launch1 and thirty; then ten, five, four, three, two, one during preparation. Enter early and verify subsequent preparation prompts stop.

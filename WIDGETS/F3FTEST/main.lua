@@ -1,4 +1,4 @@
--- Pocket_f3f 1.2 Voice TEST - countdown and race-end voices; stable flight unchanged
+-- Pocket_f3f 1.3 Rudder TEST10 - continuous body axes; experimental flight core
 -- No RF functions, no model configuration changes.
 local sin,cos,sqrt,abs,pi=math.sin,math.cos,math.sqrt,math.abs,math.pi
 local function C(r,g,b) return lcd.RGB(r,g,b) end
@@ -12,9 +12,27 @@ local function stick(name)
  if type(v)~='number' then return 0 end
  return lim(v/1024,-1,1)
 end
+-- Body basis stays continuous through vertical flight; Euler angles are display-only.
+local function dot(a,b) return a[1]*b[1]+a[2]*b[2]+a[3]*b[3] end
+local function unit(a)
+ local n=sqrt(dot(a,a));if n<0.0000001 then return {1,0,0} end
+ return {a[1]/n,a[2]/n,a[3]/n}
+end
+local function cross(a,b)return {a[2]*b[3]-a[3]*b[2],a[3]*b[1]-a[1]*b[3],a[1]*b[2]-a[2]*b[1]}end
+local function pair(a,b,angle)
+ local c,q=cos(angle),sin(angle)
+ return {a[1]*c+b[1]*q,a[2]*c+b[2]*q,a[3]*c+b[3]*q},
+        {b[1]*c-a[1]*q,b[2]*c-a[2]*q,b[3]*c-a[3]*q}
+end
+local function rotate(v,axis,angle)
+ local c,q=cos(angle),sin(angle);local d=dot(v,axis);local k=cross(axis,v)
+ return {v[1]*c+k[1]*q+axis[1]*d*(1-c),v[2]*c+k[2]*q+axis[2]*d*(1-c),v[3]*c+k[3]*q+axis[3]*d*(1-c)}
+end
+-- Experimental ridge wind: air-relative velocity is V; ground motion adds wind.
+local RIDGE_UP=8.0 -- m/s peak, deliberately tunable; not calibrated to a real site
 local function create(zone,options)
  return {zone=zone,last=getTime(),timer=getTime(),frames=0,fps=0,
- x=0,y=-18,z=33,heading=pi/2,bank=0,pitch=0,velocity=34, lift=0,crashed=false,resetHeld=false,
+ x=0,y=-18,z=33,heading=pi/2,bank=0,pitch=0,F={1,0,0},W={0,1,0},U={0,0,1},V={34,0,0},yawRate=0,lastTurn=0,pitchFall=false,vertical=false,velocity=34, lift=0,crashed=false,resetHeld=false,
  launch=0, prepStart=getTime(),runStart=nil,runEnd=nil,entered=false,legs=0,nextBase=nil,baseLast=0,finishTone=false,lastCount=31,penalties=0,penLast=0,rearActive=false,lastSignal=0,lastWhistle=-600,pendingBaseTone=0,pendingBaseAt=0,voiceLaunch=false,voiceThirty=false,pendingRaceVoice=nil,pendingRaceVoiceAt=0}
 end
 local function triangle(a,b,c,col)
@@ -23,6 +41,8 @@ end
 local function refresh(s,event,touch)
  local t=getTime(); local dt=lim((t-s.last)/100,0,0.14);s.last=t
  local rawA=stick('ail');local rawE=stick('ele')
+ local rud=stick('rud')
+ rud=abs(rud)<=0.025 and 0 or (rud>0 and 1 or -1)*(abs(rud)-0.025)/0.975
  -- Invert directions requested from radio test; leave real radio model unchanged.
  local ail=-rawA;local ele=-rawE
  -- SH momentary switch: reset on positive transition, if present.
@@ -30,6 +50,7 @@ local function refresh(s,event,touch)
  local held=type(sh)=='number' and sh>500
  if held and not s.resetHeld then
   s.x=0;s.y=-18;s.z=33;s.heading=pi/2;s.bank=0;s.pitch=0
+  s.F={1,0,0};s.W={0,1,0};s.U={0,0,1};s.V={34,0,0};s.yawRate=0;s.lastTurn=0;s.pitchFall=false;s.vertical=false
   s.velocity=34;s.lift=0;s.crashed=false;s.last=t;dt=0
   s.prepStart=t;s.runStart=nil;s.runEnd=nil;s.entered=false;s.legs=0;s.nextBase=nil;s.baseLast=t;s.lastCount=31;s.penalties=0;s.penLast=0;s.rearActive=false;s.lastSignal=t;s.lastWhistle=t-600;s.pendingBaseTone=0;s.pendingBaseAt=0;s.voiceLaunch=false;s.voiceThirty=false;s.pendingRaceVoice=nil;s.pendingRaceVoiceAt=0
  end
@@ -64,53 +85,79 @@ local function refresh(s,event,touch)
    s.lastCount=remaining
   end
  end
- -- Stable controls/looping from v1.6 and v1.7 are unchanged.
+ -- Continuous body controls with experimental energy/inertia integration.
  -- Crash freezes the aircraft until SH is pressed again.
  if not s.crashed then
-  -- v3.0: v2.9 roll and center-stick feel, with stronger outer elevator.
-  -- Control authority grows with airspeed, as aerodynamic pressure does.
-  -- Keep v2.1 authority at 34 m/s; DO NOT reduce authority at low speed.
-  -- Bounded factors avoid exaggerated response at the 75 m/s speed ceiling.
   local speedExcess=lim((s.velocity-34)/41,0,1)
-  local rollGain=1+0.38*speedExcess
-  local pitchGain=1+0.35*speedExcess
   local rollFeel=ail==0 and 0 or (ail>0 and 1 or -1)*abs(ail)^0.62
-  s.bank=s.bank+rollFeel*dt*2.76*rollGain
-  if s.bank>pi then s.bank=s.bank-2*pi elseif s.bank< -pi then s.bank=s.bank+2*pi end
-  local cb=cos(s.bank);local sb=sin(s.bank)
-  -- Softer center-to-mid-stick ramp for tight F3F turns without stick at stop.
-  -- Preserve sign and zero; use progressive exponent below 1.
   local elevatorFeel=ele==0 and 0 or (ele>0 and 1 or -1)*abs(ele)^0.61
-  -- v3.0: preserve center and mid-stick response of v2.9.
-  -- Smoothly boost ONLY the last half of elevator stick travel.
   local outer=lim((abs(ele)-0.48)/0.52,0,1)
-  local outerBoost=1+0.40*outer*outer*(3-2*outer)
-  local elevatorRate=1.54*elevatorFeel*pitchGain*outerBoost
-  s.pitch=s.pitch+elevatorRate*cb*dt
-  if s.pitch>pi then s.pitch=s.pitch-2*pi elseif s.pitch< -pi then s.pitch=s.pitch+2*pi end
-  -- More heading rotation at F3F speed: previous v2.5 turn radius was too wide.
-  -- This modifies TURNING only; the looping pitch axis stays as before.
-  local turnFactor=1.25+0.55*speedExcess
-  s.heading=s.heading+(-elevatorRate*sb*.95*turnFactor - .18*sb)*dt
-  -- Variable speed: accelerate descending, decelerate climbing.
-  -- No arbitrary 5 m/s crawl: 12 m/s minimum pending future stall model.
-  local shore=abs(s.y+12)
-  local updraft=0
-  if s.y<=20 and s.y>=-105 then
-   updraft=2.8*lim(1-shore/100,0,1)*lim(1-(s.z-20)/180,0,1)
+  local lowSpeedControl=lim((s.velocity/22)^2,0.12,1)
+  local elevatorRate=lowSpeedControl*1.54*elevatorFeel*(1+0.35*speedExcess)*(1+0.40*outer*outer*(3-2*outer))
+  -- All three commands use CURRENT BODY axes, never a reconstituted bank sign.
+  s.W,s.U=pair(s.W,s.U,rollFeel*dt*2.76*(1+0.38*speedExcess))
+  local pitchAxis=s.W
+  s.F,s.U=pair(s.F,s.U,elevatorRate*dt)
+  if not s.vertical then s.V=rotate(s.V,pitchAxis,-elevatorRate*dt) end
+  if not s.vertical and ((s.F[3]>0.819152 and s.V[3]>0 and abs(ele)<0.12) or s.velocity<12) then s.vertical=true end
+  local rudAuthority=lim((s.velocity/34)^2,0.45,1.25)
+  local yawLimit=s.vertical and 1.60 or 1.0
+  local yawTarget=rud*(s.vertical and 1.30 or 0.80)*math.max(rudAuthority,s.vertical and 0.85 or 0)
+  if abs(rud)>0.03 then s.lastTurn=rud>0 and 1 or -1 end
+  if s.vertical and s.V[3]< -0.5 then
+   -- Continuous two-axis weathercock recovery towards the descending airflow.
+   -- A yaw-only controller cannot recover all bank/pitch combinations.
+   local alignment=lim(s.velocity/10,0.65,2.8)
+   local yawRecovery=-s.W[3]*alignment
+   local pitchRecovery=-s.U[3]*alignment
+   if s.F[3]>0.98 and abs(yawRecovery)+abs(pitchRecovery)<0.15 then
+    -- Break the exactly nose-up symmetry without reversing the selected side.
+    if s.lastTurn~=0 then yawRecovery=s.lastTurn*0.8 else pitchRecovery=-0.8 end
+   end
+   yawTarget=yawTarget+yawRecovery*(1-abs(rud))^2
+   local pitchStep=lim(pitchRecovery,-1.8,1.8)*(1-abs(ele))^2*dt
+   s.F,s.U=pair(s.F,s.U,pitchStep)
+  elseif not s.vertical then
+   local error=math.atan2(dot(s.V,s.W),dot(s.V,s.F))
+   yawTarget=yawTarget+error*0.85*(1-abs(rud))^2
   end
+  s.yawRate=lim(s.yawRate+(lim(yawTarget,-yawLimit,yawLimit)-s.yawRate)*(1-math.exp(-dt/0.18)),-yawLimit,yawLimit)
+  s.F,s.W=pair(s.F,s.W,s.yawRate*dt)
+  -- Numerical orthonormalisation: no attitude switches at the vertical pole.
+  s.F=unit(s.F);s.U=unit(cross(s.F,s.W));s.W=unit(cross(s.U,s.F))
+  s.pitch=math.atan2(s.F[3],sqrt(s.F[1]^2+s.F[2]^2))
+  s.heading=math.atan2(s.F[1],-s.F[2]);s.bank=math.atan2(s.W[3],s.U[3])
+  local shore=abs(s.y+12);local updraft=0
+  if s.y<=20 and s.y>=-105 then updraft=RIDGE_UP*lim(1-shore/55,0,1)*lim(1-(s.z-20)/150,0,1) end
   s.lift=updraft
-  local v=s.velocity
-  -- Small ridge-energy recovery offsets drag close to the slope.
-  -- No artificial extra turning authority; preserves v2.1 control feel.
-  local drag=.10+.00018*v*v
-  local ridgeEnergy=updraft*.18
-  v=lim(v+(-9.81*sin(s.pitch)-drag+ridgeEnergy)*dt,15,75)
-  s.velocity=v
-  local oldX=s.x;local oldY=s.y
-  local nx=s.x+sin(s.heading)*v*dt
-  local ny=s.y-cos(s.heading)*v*dt
-  local nz=s.z+(sin(s.pitch)*v+updraft-.65)*dt
+  local oldX=s.x;local oldY=s.y;local nx,ny,nz
+  if s.vertical then
+   local previousVz=s.V[3]
+   local speed=sqrt(dot(s.V,s.V))
+   local drag=.10+.00018*speed*speed
+   local damping=speed>0.001 and math.max(0,1-drag*dt/speed) or 1
+   s.V[1]=s.V[1]*damping;s.V[2]=s.V[2]*damping
+   s.V[3]=s.V[3]*damping-9.81*dt
+   nx=s.x+s.V[1]*dt;ny=s.y+s.V[2]*dt;nz=s.z+((previousVz+s.V[3])*0.5+updraft-.65)*dt
+   -- Do not lock elevator control out until a yaw-rate threshold is satisfied.
+   local pilotRecovery=abs(ele)>0.12 and s.velocity>15 and s.V[3]<0
+   local naturalRecovery=abs(rud)<0.03 and s.F[3]< -0.80 and s.V[3]< -8
+   if pilotRecovery or naturalRecovery then s.vertical=false;s.pitchFall=false end
+  else
+   -- Speed follows the ACTUAL trajectory slope, not where the nose points.
+   -- Midpoint displacement converts gravity's work into kinetic energy.
+   local direction=unit(s.V);local blend=1-math.exp(-dt/1.6)
+   direction=unit({direction[1]+(s.F[1]-direction[1])*blend,direction[2]+(s.F[2]-direction[2])*blend,direction[3]+(s.F[3]-direction[3])*blend})
+   local oldSpeed=sqrt(dot(s.V,s.V))
+   local drag=.10+.00018*oldSpeed*oldSpeed
+   local v=math.max(0,oldSpeed+(-9.81*direction[3]-drag)*dt)
+   local travelSpeed=(oldSpeed+v)*0.5
+   s.V={direction[1]*v,direction[2]*v,direction[3]*v}
+   nx=s.x+direction[1]*travelSpeed*dt
+   ny=s.y+direction[2]*travelSpeed*dt
+   nz=s.z+(direction[3]*travelSpeed+updraft-.65)*dt
+  end
+  s.velocity=sqrt(dot(s.V,s.V))
   -- Ground follows the rendered slope: plateau z=20, cliff z=0..20,
   -- beach/sea z=0. Collision uses current AND proposed position.
   local function terrainY(yy)
@@ -334,18 +381,7 @@ local function refresh(s,event,touch)
   end
  end
  -- Glider local axes. Model dimensions: 3.8m span, 1.75m length.
- local a=s.heading;local b=s.bank;local p=s.pitch
- local forward={sin(a)*cos(p),-cos(a)*cos(p),sin(p)}
- -- Proper orthonormal aircraft axes at any pitch/bank.
- -- Previous version projected a false bank when climbing/descending.
- local rightLevel={cos(a),sin(a),0}
- local upLevel={-sin(a)*sin(p),cos(a)*sin(p),cos(p)}
- local wing={rightLevel[1]*cos(b)+upLevel[1]*sin(b),
-             rightLevel[2]*cos(b)+upLevel[2]*sin(b),
-             upLevel[3]*sin(b)}
- local up={upLevel[1]*cos(b)-rightLevel[1]*sin(b),
-           upLevel[2]*cos(b)-rightLevel[2]*sin(b),
-           upLevel[3]*cos(b)}
+ local forward=s.F;local wing=s.W;local up=s.U
  local function vp(f,v,u)
   return {s.x+forward[1]*f+wing[1]*v+up[1]*u,
           s.y+forward[2]*f+wing[2]*v+up[2]*u,
@@ -395,8 +431,8 @@ local function refresh(s,event,touch)
  if t-s.timer>=100 then
   s.fps=math.floor(s.frames*100/(t-s.timer)+.5);s.timer=t;s.frames=0
  end
- lcd.drawText(x+6,y+3,'POCKET F3F BETA',SMLSIZE+INK)
- lcd.drawText(x+6,y+20,'FPS '..s.fps..' A '..math.floor(ail*100)..' E '..math.floor(ele*100)..' B '..math.floor(s.bank*180/pi),SMLSIZE+INK)
+ lcd.drawText(x+6,y+3,'F3F 1.3 RUD TEST10',SMLSIZE+INK)
+ lcd.drawText(x+6,y+20,'FPS '..s.fps..' A '..math.floor(ail*100)..' E '..math.floor(ele*100)..' R '..math.floor(rud*100)..(s.vertical and ' VERT' or ''),SMLSIZE+INK)
  local f3fText
  if s.runEnd then
   f3fText=string.format('META 10/10  %.2fs',(s.runEnd-s.runStart)/100)
@@ -417,4 +453,4 @@ local function refresh(s,event,touch)
   lcd.drawText(x+math.floor(w*.28),y+math.floor(h*.45),'IMPACTO - SH REINICIA',SMLSIZE+WHITE)
  end
 end
-return {name='F3FTEST',options={},create=create,refresh=refresh}
+return {name='F3FRUD10',options={},create=create,refresh=refresh}
