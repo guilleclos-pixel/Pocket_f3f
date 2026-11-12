@@ -32,3 +32,9 @@ The historical checklist above records earlier work; it does not certify the voi
 - [ ] Include the new [Rudder TEST10 demonstration](https://youtu.be/IngQQTTQPvE) in the next release notes; retain the previous release's video link.
 - [ ] Create a draft prerelease using that commit and attach the verified ZIP. Download and test the attached ZIP before publication.
 - [ ] Publish only after approval. Keep the previous beta.1 release, tag and asset intact.
+
+## Candidate validation and authorization — 2026-11-12
+
+- [x] Creator reports installing the candidate built from d8f0436 and confirms it works. This is a general report, not a record of every detailed check above.
+- [x] Creator explicitly authorizes redistribution and modification of the ten new voices within Pocket_f3f; documented in AUDIO_LICENSE.md.
+- Documentation-only release follow-up: Lua and WAV payloads must remain identical to the tested d8f0436 candidate.

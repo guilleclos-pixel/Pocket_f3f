@@ -1,6 +1,6 @@
 # Pocket_f3f — EdgeTX F3F slope soaring simulator
 
-**Beta software.** [Published beta.1](https://github.com/guilleclos-pixel/Pocket_f3f/releases/tag/v1.0.0-beta.1) is preserved. The voice update on `main` is newer and still needs transmitter validation.
+**Beta software.** [Published beta.1](https://github.com/guilleclos-pixel/Pocket_f3f/releases/tag/v1.0.0-beta.1) is preserved. The project creator reports successful installation and operation of the Rudder TEST10 candidate.
 
 [Español](README_ES.md)
 
@@ -32,7 +32,7 @@ Concept, pilot testing and tuning: an F3F pilot. Lua development: created with a
 
 ## Licensing
 - Lua source code and documentation: MIT License (`LICENSE`).
-- Flyby sound: limited project-specific permission (`AUDIO_LICENSE.md`); attribution required for modified versions of Pocket_f3f.
+- Flyby and ten voice files: project-specific permission (`AUDIO_LICENSE.md`); retain the notice and credit Pocket_f3f.
 
 ## Voice update / release status
 - Launch and 30-second preparation announcements; countdown voices at 10, 5, 4, 3, 2 and 1 seconds; last-leg and finish announcements. Base, penalty and finish tones remain.
@@ -40,5 +40,5 @@ Concept, pilot testing and tuning: an F3F pilot. Lua development: created with a
 - On-screen label: `F3F 1.3 RUD TEST10`; source header: `1.3 Rudder TEST10`. These identify the development revision, not a new published release.
 - Download the complete source archive from **Code → Download ZIP** for the current development version; extract it and copy the contents of its `WIDGETS` and `SOUNDS` folders to the SD root. The enclosing repository folder must not be copied as the SD root.
 - Updating `main` does not update the existing beta.1 tag or attached ZIP. Follow [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) to prepare a separate release.
-- Clean installation, audible voices, countdown cancellation, ten legs, penalties, SH reset and FPS still require testing on the transmitter. Earlier hardware/performance observations do not validate this voice update.
-- Code/documentation: MIT. Existing flyby permission: [AUDIO_LICENSE.md](AUDIO_LICENSE.md). Confirm and document redistribution permission for the ten new voices before a new public release.
+- The creator confirmed installation and operation of the candidate on 2026-11-12. Detailed results for countdown cancellation, ten legs, penalties, reset, FPS and the exact EdgeTX version have not been recorded.
+- Code/documentation: MIT. Existing flyby permission: [AUDIO_LICENSE.md](AUDIO_LICENSE.md). Redistribution and modification of the ten voices within Pocket_f3f were authorized by the creator on 2026-11-12; see AUDIO_LICENSE.md.

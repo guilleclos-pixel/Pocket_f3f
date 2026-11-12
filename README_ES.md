@@ -1,6 +1,6 @@
 # Pocket_f3f — Simulador F3F para EdgeTX
 
-**Software beta.** La [beta.1 publicada](https://github.com/guilleclos-pixel/Pocket_f3f/releases/tag/v1.0.0-beta.1) se conserva. La actualización de voces de `main` es posterior y está pendiente de validación en la emisora.
+**Software beta.** La [beta.1 publicada](https://github.com/guilleclos-pixel/Pocket_f3f/releases/tag/v1.0.0-beta.1) se conserva. El creador confirma la instalación y el funcionamiento del paquete candidato Rudder TEST10.
 
 Pocket_f3f es un simulador 3D de vuelo en ladera que se ejecuta **directamente en la emisora**, con sus sticks y pantalla. Nació de las pruebas de un piloto de F3F y se desarrolló con asistencia de ChatGPT (OpenAI).
 
@@ -33,5 +33,5 @@ Idea, validación y ajustes como piloto: piloto de F3F. Programación asistida m
 - La pantalla muestra `F3F 1.3 RUD TEST10` y la cabecera del código `1.3 Rudder TEST10`; identifican la revisión de desarrollo, no una nueva release publicada.
 - Para probar el desarrollo actual: **Code → Download ZIP**, descomprime y copia el contenido de `WIDGETS` y `SOUNDS` a la raíz de la SD. No copies la carpeta contenedora del repositorio como raíz.
 - La subida a `main` no actualiza la etiqueta ni el ZIP de beta.1. Prepara una release separada siguiendo [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
-- Queda por probar esta actualización en instalación limpia: voces audibles, cancelación de cuenta atrás, diez largos, penalizaciones, SH y rendimiento. Las pruebas anteriores no validan esta revisión.
-- Código y documentación: licencia MIT. El permiso de [AUDIO_LICENSE.md](AUDIO_LICENSE.md) cubre el sonido de pasada; falta documentar el permiso de redistribución de las diez voces nuevas antes de una nueva publicación.
+- El creador confirmó la instalación y el funcionamiento del candidato el 12 de noviembre de 2026. No se han registrado resultados detallados de cuenta atrás, diez largos, penalizaciones, SH, FPS ni la versión exacta de EdgeTX.
+- Código y documentación: licencia MIT. [AUDIO_LICENSE.md](AUDIO_LICENSE.md) cubre el sonido de pasada y las diez voces nuevas. El creador autorizó su distribución y modificación dentro de Pocket_f3f el 12 de noviembre de 2026.
