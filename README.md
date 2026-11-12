@@ -23,7 +23,9 @@ Pocket_f3f is a lightweight 3D slope-soaring simulator that runs **on the transm
 - This is a **training simulator**, not certified competition timing or a realistic aerodynamic solver.
 
 ## Video
-[Watch the demonstration](https://youtu.be/gHABmrnJCOM)
+[Watch the Rudder TEST10 demonstration](https://youtu.be/IngQQTTQPvE)
+
+[Previous beta demonstration](https://youtu.be/gHABmrnJCOM)
 
 ## Credits
 Concept, pilot testing and tuning: an F3F pilot. Lua development: created with assistance from ChatGPT (OpenAI), iterated with pilot feedback.

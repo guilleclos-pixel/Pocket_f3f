@@ -20,7 +20,9 @@ Pocket_f3f es un simulador 3D de vuelo en ladera que se ejecuta **directamente e
 Ladera, cornisa, playa, mar, bases a 100 m, diez largos, cuenta atrás, avisos acústicos, penalizaciones, colisiones y sonido de pasada. No sustituye un cronometraje oficial ni un modelo aerodinámico completo.
 
 ## Vídeo
-[Demostración](https://youtu.be/gHABmrnJCOM)
+[Demostración de Rudder TEST10](https://youtu.be/IngQQTTQPvE)
+
+[Demostración de la beta anterior](https://youtu.be/gHABmrnJCOM)
 
 ## Créditos
 Idea, validación y ajustes como piloto: piloto de F3F. Programación asistida mediante ChatGPT (OpenAI), con sucesivas pruebas y correcciones.

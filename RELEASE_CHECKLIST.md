@@ -29,5 +29,6 @@ The historical checklist above records earlier work; it does not certify the voi
 - [ ] Build ZIP from the exact tested commit with WIDGETS/ and SOUNDS/ at archive root, plus README files, LICENSE and AUDIO_LICENSE.md.
 - [ ] ZIP must contain WIDGETS/F3FTEST/main.lua and SOUNDS/es/{launch1,thirty,ten,five,four,three,two,one,lastleg,finish,pf3fpass}.wav (11 WAVs).
 - [ ] Record commit SHA and archive SHA-256 in release notes; include changes, installation, tested setup and known limitations.
+- [ ] Include the new [Rudder TEST10 demonstration](https://youtu.be/IngQQTTQPvE) in the next release notes; retain the previous release's video link.
 - [ ] Create a draft prerelease using that commit and attach the verified ZIP. Download and test the attached ZIP before publication.
 - [ ] Publish only after approval. Keep the previous beta.1 release, tag and asset intact.
